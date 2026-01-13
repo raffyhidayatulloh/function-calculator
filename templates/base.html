@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title if title else "Function Calculator" }}</title>
+
+    <!-- Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        poppins: ['Poppins', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gray-100 font-poppins">
+
+<!-- NAVBAR -->
+<nav class="bg-white border-b relative z-50">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+        <a href="/limit" class="text-lg font-semibold">
+            Function Calculator
+        </a>
+
+        <!-- Hamburger -->
+        <button id="menuBtn" class="focus:outline-none">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2"
+                 viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- MENU (OVERLAY / MENIMPA KONTEN) -->
+    <div id="mobileMenu"
+         class="hidden absolute top-full left-0 w-full bg-white border-b shadow-lg z-40">
+        <div class="max-w-6xl mx-auto px-4 py-2 flex flex-col">
+            <a href="/limit"
+               class="flex items-center py-3 px-2 rounded hover:bg-gray-100 transition">
+                <img src="{{ url_for('static', filename='icon/lim_icon.svg') }}"
+                     class="w-8 h-8 mr-2" alt="Limit Icon">
+                Limits
+            </a>
+
+            <a href="/derivative"
+               class="flex items-center py-3 px-2 rounded hover:bg-gray-100 transition">
+               <img src="{{ url_for('static', filename='icon/der_icon.svg') }}"
+                     class="w-8 h-8 mr-2" alt="Derivative Icon">
+                Derivatives
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- CONTENT -->
+<div class="max-w-3xl mx-auto px-4 mt-10 relative z-0">
+    {% block content %}{% endblock %}
+</div>
+
+<!-- JS Toggle -->
+<script>
+    const btn = document.getElementById('menuBtn');
+    const menu = document.getElementById('mobileMenu');
+
+    btn.addEventListener('click', () => {
+        menu.classList.toggle('hidden');
+    });
+</script>
+
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+</body>
+</html>
