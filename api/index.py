@@ -1,30 +1,30 @@
 from flask import Flask, render_template, request
-from sympy import symbols, sympify, limit, diff, latex, oo
+from sympy import symbols, limit, diff, oo
 from sympy.parsing.sympy_parser import (
     parse_expr,
     standard_transformations,
     implicit_multiplication_application
 )
 
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    template_folder="../templates",
+    static_folder="../static"
+)
+
 x = symbols('x')
 
+transformations = standard_transformations + (
+    implicit_multiplication_application,
+)
 
 @app.route("/")
-def home():
-    return render_template("limit.html")
-
-
 @app.route("/limit", methods=["GET", "POST"])
 def func_limit():
     result = None
     error = None
     function = ""
     x_value = ""
-
-    transformations = standard_transformations + (
-        implicit_multiplication_application,
-    )
 
     if request.method == "POST":
         function = request.form.get("function", "")
@@ -33,7 +33,6 @@ def func_limit():
         try:
             func = parse_expr(function, transformations=transformations)
 
-            # support oo / infinity
             if x_value.lower() in ["oo", "inf", "infinity"]:
                 x_val = oo
             elif x_value.lower() in ["-oo", "-inf"]:
@@ -61,12 +60,8 @@ def func_derivative():
     error = None
     function = ""
 
-    transformations = standard_transformations + (
-        implicit_multiplication_application,
-    )
-
     if request.method == "POST":
-        function = request.form["function"]
+        function = request.form.get("function", "")
         try:
             func = parse_expr(function, transformations=transformations)
             result = diff(func, x)
