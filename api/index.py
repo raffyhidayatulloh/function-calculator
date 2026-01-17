@@ -24,27 +24,9 @@ def func_limit():
     return render_template("limit.html")
 
 
-@app.route("/derivative", methods=["GET", "POST"])
+@app.route("/derivative", methods=["GET"])
 def func_derivative():
-    result = None
-    error = None
-    function = ""
-
-    if request.method == "POST":
-        function = request.form.get("function", "")
-        try:
-            func = parse_expr(function, transformations=transformations)
-            deriv = diff(func, x)
-            result = latex(deriv)
-        except Exception as e:
-            error = str(e)
-
-    return render_template(
-        "derivative.html",
-        result=result,
-        error=error,
-        function=function
-    )
+    return render_template("derivative.html" )
     
 @app.route("/api/limit-preview", methods=["POST"])
 def limit_preview():

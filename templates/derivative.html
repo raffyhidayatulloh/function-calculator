@@ -23,29 +23,6 @@
     </form>
 
     <div id="resultBox"></div>
-
-    {% if result %}
-    <div class="mt-4 bg-green-100 text-green-800 px-4 py-3 rounded">
-        <p class="font-semibold mb-1">Derivative Result:</p>
-        <div id="resultMath" class="text-lg">
-            \[ {{ result }} \]
-        </div>
-    </div>
-    
-    <script>
-    document.addEventListener("DOMContentLoaded", () => {
-        if (window.MathJax) {
-            MathJax.typeset();
-        }
-    });
-    </script>
-    {% endif %}
-
-    {% if error %}
-    <div class="mt-4 bg-red-100 text-red-800 px-4 py-3 rounded">
-        {{ error }}
-    </div>
-    {% endif %}
 </div>
 
 <script>
