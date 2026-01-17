@@ -59,9 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     input.addEventListener("input", updatePreview);
 
-    if (input.value.trim() !== "") {
-        updatePreview();
-    }
+    if (input.value.trim() !== "") { updatePreview(); }
 
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -91,9 +89,7 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
         `;
 
-        if (window.MathJax) {
-            MathJax.typesetPromise([resultBox]);
-        }
+        if (window.MathJax) { MathJax.typesetPromise([resultBox]); }
     });
 });
 </script>

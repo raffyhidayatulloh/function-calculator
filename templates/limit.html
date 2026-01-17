@@ -10,7 +10,7 @@
             <input type="text" name="function"
                 value="{{ function }}"
                 class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
-                placeholder="Example: (x**2 - 1)/(x - 1)" required>
+                placeholder="Example: sqrt(x**2+7)" required>
         </div>
 
         <div>
@@ -111,9 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
         `;
 
-        if (window.MathJax) {
-            MathJax.typesetPromise([resultBox]);
-        }
+        if (window.MathJax) { MathJax.typesetPromise([resultBox]); }
     });
 });
 </script>

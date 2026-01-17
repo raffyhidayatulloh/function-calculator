@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="bg-white shadow rounded-lg p-6">
+    <h4 class="text-lg font-semibold mb-4">Composition Calculator</h4>
+
+    <form id="compositionForm" method="POST" action="{{ url_for('func_composition') }}" class="space-y-4">
+        <div>
+            <label class="block text-sm mb-1">Function f(x)</label>
+            <input type="text" name="functionF"
+                value="{{ functionF }}"
+                class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                placeholder="Example: 2*x + 1" required>
+        </div>
+
+        <div>
+            <label class="block text-sm mb-1">Function g(x)</label>
+            <input type="text" name="functionG"
+                value="{{ functionG }}"
+                class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                placeholder="Example: x - 3" required>
+        </div>
+
+        <div>
+            <label class="block text-sm mb-1">Composition Type</label>
+            <div class="mt-2 grid grid-cols-1">
+                <select name="mode" class="col-start-1 row-start-1 w-full border appearance-none rounded py-1.5 pr-8 pl-3 focus:outline-none focus:ring focus:ring-blue-200">
+                    <option value="fog">f(g(x)) - f composed with g</option>
+                    <option value="gof">g(f(x)) - g composed of f</option>
+                </select>
+                <svg viewBox="0 0 16 16" fill="currentColor" data-slot="icon" aria-hidden="true" class="pointer-events-none col-start-1 row-start-1 mr-2 size-5 self-center justify-self-end text-gray-400 sm:size-4">
+                    <path d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" fill-rule="evenodd" />
+                </svg>
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-sm mb-1">Evaluation at x = (optional)</label>
+            <input type="text" name="x_value"
+                value="{{ x_value }}"
+                class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
+                placeholder="Enter a number">
+        </div>
+
+        <div id="previewBox" class="mt-3 bg-gray-50 border px-4 py-3 rounded hidden">
+            <div id="mathPreview" class="text-lg"></div>
+        </div>
+
+        <button class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
+            Calculate
+        </button>
+    </form>
+
+    <div id="resultBox"></div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("compositionForm");
+    const fInput = document.querySelector('input[name="functionF"]');
+    const gInput = document.querySelector('input[name="functionG"]');
+    const xInput = document.querySelector('input[name="x_value"]');
+    const modeSelect = document.querySelector('select[name="mode"]');
+
+    const preview = document.getElementById("mathPreview");
+    const previewBox = document.getElementById("previewBox");
+    const resultBox = document.getElementById("resultBox");
+
+    function toLatexPower(expr) { return expr.replace(/\*\*(\([^)]+\)|\w+)/g, '^{$1}'); }
+
+    function updatePreview() {
+        const fVal = fInput.value.trim();
+        const gVal = gInput.value.trim();
+
+        if (!fVal && !gVal) {
+            previewBox.classList.add("hidden");
+            preview.innerHTML = "";
+            return;
+        }
+
+        let lines = [];
+
+        if (fVal) { lines.push(`f(x) &= ${toLatexPower(fVal)}`); }
+
+        if (gVal) { lines.push(`g(x) &= ${toLatexPower(gVal)}`); }
+
+        preview.innerHTML = `
+            \\[
+                \\begin{aligned}
+                    ${lines.join(" \\\\ ")}
+                \\end{aligned}
+            \\]
+        `;
+
+        previewBox.classList.remove("hidden");
+
+        if (window.MathJax) { MathJax.typesetPromise([preview]); }
+    }
+
+    fInput.addEventListener("input", updatePreview);
+    gInput.addEventListener("input", updatePreview);
+    modeSelect.addEventListener("change", updatePreview);
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+
+        const res = await fetch("/api/composition-calc", {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await res.json();
+
+        if (data.error) {
+            resultBox.innerHTML = `<div class="bg-red-100 p-3 rounded">${data.error}</div>`;
+            return;
+        }
+
+        const compositionChain = data.steps.join(" = ");
+
+        let evaluationBlock = "";
+
+        if (data.eval_steps && data.eval_steps.length > 0) {
+            const evalHtml = data.eval_steps.map(step => {
+                if (step.startsWith("\\text")) {
+                    return `
+                        <p class="mt-2">
+                            <strong>${step.replace(/\\text\{|\}/g, "")}</strong>
+                        </p>
+                    `;
+                }
+
+                return `
+                    <p>
+                        \\[ ${step} \\]
+                    </p>
+                `;
+            }).join("");
+
+            evaluationBlock = `
+                <div class="mt-4 space-y-2">
+                    ${evalHtml}
+                </div>
+            `;
+        }
+
+        resultBox.innerHTML = `
+            <div class="mt-4 bg-green-100 border px-4 py-4 rounded text-center space-y-3">
+                <p><strong>Composition</strong></p>
+                <p>
+                    \\[
+                        ${compositionChain}
+                    \\]
+                </p>
+                <p>
+                    \\[
+                        ${data.title} = ${data.result_latex}
+                    \\]
+                </p>
+                ${evaluationBlock}
+            </div>
+        `;
+
+        MathJax.typesetPromise([resultBox]);
+    });
+});
+</script>
+
+{% endblock %}
