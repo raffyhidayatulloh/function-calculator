@@ -4,13 +4,13 @@
 <div class="bg-white shadow rounded-lg p-6">
     <h4 class="text-lg font-semibold mb-4">Limit Calculator</h4>
 
-    <form method="POST" action="{{ url_for('func_limit') }}"" class="space-y-4">
+    <form id="limitForm" method="POST" action="{{ url_for('func_limit') }}" class="space-y-4">
         <div>
             <label class="block text-sm mb-1">Function</label>
             <input type="text" name="function"
                 value="{{ function }}"
                 class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
-                placeholder="Example: (x^2 - 1)/(x - 1)" required>
+                placeholder="Example: (x**2 - 1)/(x - 1)" required>
         </div>
 
         <div>
@@ -18,11 +18,10 @@
             <input type="text" name="x_value"
                 value="{{ x_value }}"
                 class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
-                placeholder="Example: 1 atau oo" required>
+                placeholder="Example: 1 atau oo">
         </div>
 
-        <div id="previewBox" class="mt-3 bg-gray-50 border px-4 py-3 rounded">
-            <p class="text-sm text-gray-600 mb-1">Preview:</p>
+        <div id="previewBox" class="mt-3 bg-gray-50 border px-4 py-3 rounded hidden">
             <div id="mathPreview" class="text-lg"></div>
         </div>
 
@@ -31,56 +30,92 @@
         </button>
     </form>
 
-    {% if result %}
-    <div class="mt-4 bg-green-100 text-green-800 px-4 py-3 rounded">
-        <strong>Limit Result:</strong> {{ result }}
-    </div>
-    {% endif %}
-
-    {% if error %}
-    <div class="mt-4 bg-red-100 text-red-800 px-4 py-3 rounded">
-        {{ error }}
-    </div>
-    {% endif %}
+    <div id="resultBox"></div>
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const funcInput = document.querySelector('input[name="function"]');
-        const xInput = document.querySelector('input[name="x_value"]');
-        const previewBox = document.getElementById('previewBox');
-        const preview = document.getElementById('mathPreview');
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("limitForm");
+    const funcInput = document.querySelector('input[name="function"]');
+    const xInput = document.querySelector('input[name="x_value"]');
+    const preview = document.getElementById('mathPreview');
+    const previewBox = document.getElementById('previewBox');
 
-        function updatePreview() {
-            const funcValue = funcInput.value.trim();
-            const xValue = xInput.value.trim();
+    async function updatePreview() {
+        const func = funcInput.value.trim();
+        let xVal = xInput.value.trim();
 
-            if (!funcValue) {
-                preview.innerHTML = '';
-                return;
-            }
-
-            let latexFunc = funcValue
-                .replace(/\*/g, '\\cdot ')
-                .replace(/\^([0-9]+)/g, '^{$1}')
-                .replace(/\//g, '\\over ');
-
-            let latexX = xValue ? xValue : '?';
-
-            preview.innerHTML = `
-                $$ \\lim_{x \\to ${latexX}} ${latexFunc} $$
-            `;
-
-            if (window.MathJax) {
-                MathJax.typesetPromise([preview]);
-            }
+        if (!func) {
+            preview.innerHTML = "";
+            previewBox.classList.add("hidden");
+            return;
         }
 
-        funcInput.addEventListener('input', updatePreview);
-        xInput.addEventListener('input', updatePreview);
+        if (!xVal) { xVal = "oo"; }
 
-        updatePreview();
+        const res = await fetch("/api/limit-preview", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                function: func,
+                x_value: xVal
+            })
+        });
+
+        const data = await res.json();
+
+        if (!data.latex) return;
+
+        preview.innerHTML = `\\[ ${data.latex} \\]`;
+        previewBox.classList.remove("hidden");
+
+        if (window.MathJax) { MathJax.typesetPromise([preview]); }
+    }
+
+    funcInput.addEventListener("input", updatePreview);
+    xInput.addEventListener("input", updatePreview);
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+
+        if (!formData.get("x_value")) { formData.set("x_value", "oo"); }
+
+        const res = await fetch("/api/limit-calc", {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await res.json();
+        const resultBox = document.getElementById("resultBox");
+
+        if (data.error) {
+            resultBox.innerHTML = `
+                <div class="mt-4 bg-red-100 px-4 py-3 rounded">
+                    ${data.error}
+                </div>`;
+            return;
+        }
+
+        resultBox.innerHTML = `
+            <div class="mt-4 bg-green-100 text-green-800 border px-4 py-3 rounded space-y-2 text-center">
+                <p><strong>Limit value substitution</strong></p>
+                <p>\\[ x = ${data.steps.x_value_latex} \\]</p>
+                <p><strong>into the function</strong></p>
+                <p>\\[ f(x) = ${data.steps.function_latex} \\]</p>
+                <p><strong>and limit evaluation</strong></p>
+                <p>\\[ ${data.steps.limit_latex} \\]</p>
+                <p><strong>Evaluated limits</strong></p>
+                <p class="text-lg font-semibold">\\[ ${data.result_latex} \\]</p>
+            </div>
+        `;
+
+        if (window.MathJax) {
+            MathJax.typesetPromise([resultBox]);
+        }
     });
+});
 </script>
 
 {% endblock %}

@@ -4,17 +4,16 @@
 <div class="bg-white shadow rounded-lg p-6">
     <h4 class="text-lg font-semibold mb-4">Derivative Calculator</h4>
 
-    <form method="POST" action="{{ url_for('func_derivative') }}" class="space-y-4">
+    <form id="derivativeForm" method="POST" action="{{ url_for('func_derivative') }}" class="space-y-4">
         <div>
             <label class="block text-sm mb-1">Function</label>
             <input type="text" name="function"
                 value="{{ function }}"
                 class="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:ring-blue-200"
-                placeholder="Example: x^3 + 2*x" required>
+                placeholder="Example: x**3 + 2*x" required>
         </div>
 
-        <div id="previewBox" class="mt-3 bg-gray-50 border px-4 py-3 rounded">
-            <p class="text-sm text-gray-600 mb-1">Preview:</p>
+        <div id="previewBox" class="mt-3 bg-gray-50 border px-4 py-3 rounded hidden">
             <div id="mathPreview" class="text-lg"></div>
         </div>
 
@@ -23,10 +22,23 @@
         </button>
     </form>
 
+    <div id="resultBox"></div>
+
     {% if result %}
     <div class="mt-4 bg-green-100 text-green-800 px-4 py-3 rounded">
-        <strong>Derivative Result:</strong> {{ result }}
+        <p class="font-semibold mb-1">Derivative Result:</p>
+        <div id="resultMath" class="text-lg">
+            \[ {{ result }} \]
+        </div>
     </div>
+    
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        if (window.MathJax) {
+            MathJax.typeset();
+        }
+    });
+    </script>
     {% endif %}
 
     {% if error %}
@@ -38,33 +50,74 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("derivativeForm");
     const input = document.querySelector('input[name="function"]');
     const preview = document.getElementById('mathPreview');
+    const previewBox = document.getElementById('previewBox');
 
-    function updatePreview() {
+    async function updatePreview() {
         const value = input.value.trim();
+
         if (!value) {
-            preview.innerHTML = '';
+            preview.innerHTML = "";
+            previewBox.classList.add("hidden");
             return;
         }
 
-        let latex = value
-            .replace(/\*/g, '\\cdot ')
-            .replace(/\^([0-9]+)/g, '^{$1}')
-            .replace(/\//g, '\\over ');
+        const res = await fetch("/api/derivative-preview", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ function: value })
+        });
 
-        preview.innerHTML = `
-            $$ (${latex})' $$
+        const data = await res.json();
+
+        if (!data.latex) return;
+
+        preview.innerHTML = `\\[ (${data.latex})' \\]`;
+        previewBox.classList.remove("hidden");
+
+        if (window.MathJax) { MathJax.typesetPromise([preview]); }
+    }
+
+    input.addEventListener("input", updatePreview);
+
+    if (input.value.trim() !== "") {
+        updatePreview();
+    }
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+
+        const res = await fetch("/api/derivative-calc", {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await res.json();
+        const resultBox = document.getElementById("resultBox");
+
+        if (data.error) {
+            resultBox.innerHTML = `
+                <div class="mt-4 bg-red-100 px-4 py-3 rounded">
+                    ${data.error}
+                </div>`;
+            return;
+        }
+
+        resultBox.innerHTML = `
+            <div class="mt-4 bg-green-100 text-green-800 border px-4 py-3 rounded space-y-2 text-center">
+                <p><strong>Derivative result</strong></p>
+                <p class="text-lg font-semibold">\\[ ${data.result_latex} \\]</p>
+            </div>
         `;
 
         if (window.MathJax) {
-            MathJax.typesetPromise([preview]);
+            MathJax.typesetPromise([resultBox]);
         }
-    }
-
-    input.addEventListener('input', updatePreview);
-
-    updatePreview();
+    });
 });
 </script>
 
