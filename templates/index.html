@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="max-w-5xl mx-auto">
+    <h2 class="text-2xl font-bold mb-6 text-center">
+        Mathematical Function Calculator
+    </h2>
+
+    <div class="grid grid-cols-1 gap-6">
+
+        <!-- Limit -->
+        <a href="{{ url_for('func_limit') }}"
+           class="group bg-white shadow rounded-lg p-6 hover:shadow-lg transition border">
+            <div class="text-center space-y-3">
+                <h3 class="text-lg font-semibold group-hover:text-blue-600">
+                    Limit Calculator
+                </h3>
+                <p class="text-sm text-gray-600">
+                    Calculate limits of functions as x approaches a value or infinity.
+                </p>
+            </div>
+        </a>
+
+        <!-- Derivative -->
+        <a href="{{ url_for('func_derivative') }}"
+           class="group bg-white shadow rounded-lg p-6 hover:shadow-lg transition border">
+            <div class="text-center space-y-3">
+                <h3 class="text-lg font-semibold group-hover:text-blue-600">
+                    Derivative Calculator
+                </h3>
+                <p class="text-sm text-gray-600">
+                    Find derivatives and see symbolic differentiation results.
+                </p>
+            </div>
+        </a>
+
+        <!-- Composition -->
+        <a href="{{ url_for('func_composition') }}"
+           class="group bg-white shadow rounded-lg p-6 hover:shadow-lg transition border">
+            <div class="text-center space-y-3">
+                <h3 class="text-lg font-semibold group-hover:text-blue-600">
+                    Function Composition
+                </h3>
+                <p class="text-sm text-gray-600">
+                    Compute (f ∘ g)(x) and (g ∘ f)(x).
+                </p>
+            </div>
+        </a>
+
+    </div>
+</div>
+
+{% endblock %}

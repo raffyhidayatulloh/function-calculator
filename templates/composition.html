@@ -60,7 +60,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const fInput = document.querySelector('input[name="functionF"]');
     const gInput = document.querySelector('input[name="functionG"]');
     const xInput = document.querySelector('input[name="x_value"]');
-    const modeSelect = document.querySelector('select[name="mode"]');
 
     const preview = document.getElementById("mathPreview");
     const previewBox = document.getElementById("previewBox");
@@ -99,7 +98,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     fInput.addEventListener("input", updatePreview);
     gInput.addEventListener("input", updatePreview);
-    modeSelect.addEventListener("change", updatePreview);
 
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -117,8 +115,6 @@ document.addEventListener("DOMContentLoaded", () => {
             resultBox.innerHTML = `<div class="bg-red-100 p-3 rounded">${data.error}</div>`;
             return;
         }
-
-        const compositionChain = data.steps.join(" = ");
 
         let evaluationBlock = "";
 
@@ -149,11 +145,6 @@ document.addEventListener("DOMContentLoaded", () => {
         resultBox.innerHTML = `
             <div class="mt-4 bg-green-100 border px-4 py-4 rounded text-center space-y-3">
                 <p><strong>Composition</strong></p>
-                <p>
-                    \\[
-                        ${compositionChain}
-                    \\]
-                </p>
                 <p>
                     \\[
                         ${data.title} = ${data.result_latex}

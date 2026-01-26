@@ -19,6 +19,9 @@ transformations = standard_transformations + (
 )
 
 @app.route("/")
+def index():
+    return render_template("index.html")
+
 @app.route("/limit", methods=["GET"])
 def func_limit():
     return render_template("limit.html")
@@ -126,30 +129,6 @@ def derivative_calc_api():
 def func_composition():
     return render_template("composition.html")
 
-@app.route("/api/composition-preview", methods=["POST"])
-def composition_preview():
-    data = request.get_json()
-
-    f_str = data.get("functionF", "")
-    g_str = data.get("functionG", "")
-    mode = data.get("mode", "fog")
-
-    try:
-        f_expr = parse_expr(f_str, transformations=transformations)
-        g_expr = parse_expr(g_str, transformations=transformations)
-
-        if mode == "fog":
-            composed = f_expr.subs(x, g_expr)
-            latex_expr = rf"f(g(x)) = {latex(composed)}"
-        else:
-            composed = g_expr.subs(x, f_expr)
-            latex_expr = rf"g(f(x)) = {latex(composed)}"
-
-        return jsonify({"latex": latex_expr})
-
-    except Exception:
-        return jsonify({"latex": ""})
-
 @app.route("/api/composition-calc", methods=["POST"])
 def composition_calc():
     f_str = request.form.get("functionF", "")
@@ -161,27 +140,14 @@ def composition_calc():
         f_expr = parse_expr(f_str, transformations=transformations)
         g_expr = parse_expr(g_str, transformations=transformations)
 
-        steps = []
         eval_steps = []
 
         if mode == "fog":
-            steps.append(r"(f \circ g)(x)")
-            steps.append(r"f(g(x))")
-            steps.append(rf"f({latex(g_expr)})")
-
             substituted = f_expr.subs(x, g_expr)
-            steps.append(latex(substituted))
-
             simplified = substituted.simplify()
             title = "(f \\circ g)(x)"
         else:
-            steps.append(r"(g \circ f)(x)")
-            steps.append(r"g(f(x))")
-            steps.append(rf"g({latex(f_expr)})")
-
             substituted = g_expr.subs(x, f_expr)
-            steps.append(latex(substituted))
-
             simplified = substituted.simplify()
             title = "(g \\circ f)(x)"
 
@@ -205,7 +171,6 @@ def composition_calc():
             eval_steps.append(latex(evaluated))
 
         return jsonify({
-            "steps": steps,
             "result_latex": latex(simplified),
             "title": title,
             "eval_steps": eval_steps
