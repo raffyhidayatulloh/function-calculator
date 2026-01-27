@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify
-from sympy import symbols, limit, diff, oo, latex
+from sympy import symbols, limit, diff, oo, latex, factor, cancel
 from sympy.parsing.sympy_parser import (
     parse_expr,
     standard_transformations,
@@ -78,17 +78,49 @@ def explain_limit(expr, x_val):
     steps["function_latex"] = latex(expr)
     steps["x_value_latex"] = latex(x_val)
 
+    # Substituted
     substituted = expr.subs(x, x_val)
     steps["substituted_latex"] = latex(substituted)
 
     expr_str = latex(expr)
     x_val_str = latex(x_val)
-    
     substituted_expr = expr_str.replace('x', f'({x_val_str})')
-    
     steps["limit_latex"] = rf"\lim_{{x \to {x_val_str}}} {substituted_expr}"
 
+    factoring = None
+    simplified_limit = None
+    simplified_evaluation = None
+    indeterminate = None
+    
+    # Indeterminate form
+    try:
+        num, den = expr.as_numer_denom()
+        num_sub = num.subs(x, x_val)
+        den_sub = den.subs(x, x_val)
+
+        #  0/0
+        if num_sub == 0 and den_sub == 0:
+            indeterminate = r"\frac{0}{0}"
+            
+            num_fact = factor(num)
+            den_fact = factor(den)
+
+            factoring = rf"\frac{{{latex(num_fact)}}}{{{latex(den_fact)}}}"
+
+            simplified_expr = cancel(expr)
+            simplified_limit = rf"\lim_{{x \to {x_val_str}}} {latex(simplified_expr)}"
+            
+            simplified_expr_str = latex(simplified_expr)
+            simplified_evaluation = rf"\lim_{{x \to {x_val_str}}} {simplified_expr_str.replace('x', f'({x_val_str})')}"
+
+    except Exception:
+        pass
+
     result = limit(expr, x, x_val)
+    steps["indeterminate_latex"] = indeterminate
+    steps["factoring_latex"] = factoring
+    steps["simplified_limit_latex"] = simplified_limit
+    steps["simplified_evaluation_latex"] = simplified_evaluation
     steps["result_latex"] = latex(result)
 
     return steps, result

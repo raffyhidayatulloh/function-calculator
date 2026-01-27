@@ -98,6 +98,33 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        let indeterminateBlock = "";
+        let factoringBlock = "";
+        let simplifiedEvalBlock = "";
+
+        if (data.steps.indeterminate_latex) {
+            indeterminateBlock = `
+                <p><strong>Indeterminate form</strong></p>
+                <p>\\[ ${data.steps.indeterminate_latex} \\]</p>
+            `;
+        }
+
+        if (data.steps.factoring_latex) {
+            factoringBlock = `
+                <p><strong>Factoring</strong></p>
+                <p>\\[ ${data.steps.factoring_latex} \\]</p>
+                <p><strong>Simplified limit</strong></p>
+                <p>\\[ ${data.steps.simplified_limit_latex} \\]</p>
+            `;
+        }
+
+        if (data.steps.simplified_evaluation_latex) {
+            simplifiedEvalBlock = `
+                <p><strong>Simplified limit evaluation</strong></p>
+                <p>\\[ ${data.steps.simplified_evaluation_latex} \\]</p>
+            `;
+        }
+
         resultBox.innerHTML = `
             <div class="mt-4 bg-green-100 border px-4 py-3 rounded space-y-2 text-center">
                 <p><strong>Limit value substitution</strong></p>
@@ -106,12 +133,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 <p>\\[ f(x) = ${data.steps.function_latex} \\]</p>
                 <p><strong>and limit evaluation</strong></p>
                 <p>\\[ ${data.steps.limit_latex} \\]</p>
+                ${indeterminateBlock}
+                ${factoringBlock}
+                ${simplifiedEvalBlock}
                 <p><strong>Evaluated limits</strong></p>
                 <p class="text-lg font-semibold">\\[ ${data.result_latex} \\]</p>
             </div>
         `;
 
-        if (window.MathJax) { MathJax.typesetPromise([resultBox]); }
+        MathJax.typesetPromise([resultBox]);
     });
 });
 </script>
