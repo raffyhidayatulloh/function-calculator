@@ -101,4 +101,10 @@ This project is intended for:
 
 ---
 
-## ⭐ If you find this project useful, feel free to share or improve it.
+### ⭐ If you find this project useful, feel free to share or improve it.
+
+---
+
+## 📸 Screenshots
+
+<img src="ss/ss_home.png" />
